@@ -1,0 +1,23 @@
+[package]
+name = "prompt-studio"
+description = "Prompt Composer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+keyring = { version = "3", features = ["apple-native", "sync-secret-service"] }
+reqwest = { version = "0.12", features = ["json"] }
+tokio = { version = "1", features = ["rt"] }
+window-vibrancy = "0.6"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[lib]
+name = "prompt_studio_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]

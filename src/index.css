@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+/* Disable text selection on everything */
+* {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Allow text selection only inside Monaco editor content area */
+.monaco-editor .view-lines,
+.monaco-editor .view-lines *,
+.monaco-editor .inputarea,
+.monaco-editor .inputarea * {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}
+
+/* Also allow selection in input fields */
+input, textarea {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.2s ease-out;
+}
