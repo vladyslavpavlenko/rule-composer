@@ -1,5 +1,5 @@
-import { useRef, useEffect } from "react";
-import { LuFileText, LuX, LuCheck } from "react-icons/lu";
+import { useRef, useEffect, useCallback, useState } from "react";
+import { LuFileText, LuX, LuCheck, LuChevronDown, LuChevronUp } from "react-icons/lu";
 import Editor, { OnMount } from "@monaco-editor/react";
 import type { editor as monacoEditor } from "monaco-editor";
 import { PromptIssue } from "../lib/claude";
@@ -60,6 +60,17 @@ export default function PromptEditor({
   const editorRef = useRef<monacoEditor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<typeof import("monaco-editor") | null>(null);
   const decorationsRef = useRef<monacoEditor.IEditorDecorationsCollection | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      el.style.setProperty("--editor-panel-width", `${entry.contentRect.width}px`);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const handleMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
@@ -128,9 +139,15 @@ export default function PromptEditor({
   };
 
   const hasIssues = issues.length > 0;
+  const [issuesCollapsed, setIssuesCollapsed] = useState(false);
+
+  // Expand automatically when new issues arrive
+  useEffect(() => {
+    if (issues.length > 0) setIssuesCollapsed(false);
+  }, [issues.length]);
 
   return (
-    <div className="flex h-full flex-col">
+    <div ref={containerRef} className="flex h-full flex-col">
       <div className="flex items-center gap-2 border-b border-white/[0.06] px-3 h-[38px] shrink-0">
         <LuFileText size={12} className="text-neutral-500 flex-shrink-0" />
         <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
@@ -153,59 +170,7 @@ export default function PromptEditor({
         </button>
       </div>
 
-      {/* Issues panel */}
-      {hasIssues && (
-        <div className="border-b border-white/[0.06] px-3 py-2 max-h-[200px] overflow-y-auto">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-600">
-              {issues.length} issue{issues.length > 1 ? "s" : ""} found
-            </span>
-            <button
-              onClick={onClearIssues}
-              className="rounded-md p-0.5 text-neutral-600 hover:bg-white/[0.06] hover:text-neutral-400"
-              title="Dismiss"
-            >
-              <LuX size={12} />
-            </button>
-          </div>
-          <div className="space-y-1">
-            {issues.map((issue) => (
-              <div
-                key={issue.id}
-                className="flex items-start gap-2 rounded px-2 py-1.5 hover:bg-white/[0.02] group"
-              >
-                <span className={`mt-1 h-2 w-2 rounded-full shrink-0 ${categoryDot[issue.category]}`} />
-                <div
-                  className="min-w-0 flex-1 cursor-pointer"
-                  onClick={() => scrollToIssue(issue)}
-                >
-                  <div className="text-[11px] text-neutral-300 leading-snug">
-                    <span className="text-neutral-500">{categoryLabel[issue.category]}:</span>{" "}
-                    {issue.suggestion}
-                  </div>
-                  {issue.replacement !== undefined && (
-                    <div className="mt-0.5 text-[11px] text-neutral-500 leading-snug">
-                      {issue.replacement
-                        ? <span>→ <span className="text-neutral-400 italic">{issue.replacement.length > 80 ? issue.replacement.slice(0, 80) + "…" : issue.replacement}</span></span>
-                        : <span className="italic">Remove</span>
-                      }
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onApplyIssue(issue); }}
-                  className="rounded-md p-1 text-neutral-600 hover:bg-white/[0.06] hover:text-green-400 opacity-0 group-hover:opacity-100 shrink-0"
-                  title="Apply suggestion"
-                >
-                  <LuCheck size={12} />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="flex-1">
+      <div className="flex-1 relative">
         <Editor
           height="100%"
           defaultLanguage="markdown"
@@ -222,6 +187,68 @@ export default function PromptEditor({
             padding: { top: 12 },
           }}
         />
+
+        {/* Issues panel — floats over editor */}
+        {hasIssues && (
+          <div className="absolute top-0 left-0 right-0 z-10 border-b border-white/[0.08] bg-neutral-950/95 backdrop-blur-sm">
+            <button
+              onClick={() => setIssuesCollapsed((c) => !c)}
+              className="flex w-full items-center justify-between px-3 py-1.5 hover:bg-white/[0.03]"
+            >
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
+                {issues.length} issue{issues.length > 1 ? "s" : ""} found
+              </span>
+              <div className="flex items-center gap-1">
+                <span
+                  onClick={(e) => { e.stopPropagation(); onClearIssues(); }}
+                  className="rounded p-0.5 text-neutral-600 hover:bg-white/[0.06] hover:text-neutral-400"
+                  title="Dismiss"
+                >
+                  <LuX size={11} />
+                </span>
+                {issuesCollapsed ? <LuChevronDown size={12} className="text-neutral-600" /> : <LuChevronUp size={12} className="text-neutral-600" />}
+              </div>
+            </button>
+            {!issuesCollapsed && (
+              <div className="max-h-[180px] overflow-y-auto px-3 pb-2">
+                <div className="space-y-1">
+                  {issues.map((issue) => (
+                    <div
+                      key={issue.id}
+                      className="flex items-start gap-2 rounded px-2 py-1.5 hover:bg-white/[0.02] group"
+                    >
+                      <span className={`mt-1 h-2 w-2 rounded-full shrink-0 ${categoryDot[issue.category]}`} />
+                      <div
+                        className="min-w-0 flex-1 cursor-pointer"
+                        onClick={() => scrollToIssue(issue)}
+                      >
+                        <div className="text-[11px] text-neutral-300 leading-snug">
+                          <span className="text-neutral-500">{categoryLabel[issue.category]}:</span>{" "}
+                          {issue.suggestion}
+                        </div>
+                        {issue.replacement !== undefined && (
+                          <div className="mt-0.5 text-[11px] text-neutral-500 leading-snug">
+                            {issue.replacement
+                              ? <span>→ <span className="text-neutral-400 italic">{issue.replacement.length > 80 ? issue.replacement.slice(0, 80) + "…" : issue.replacement}</span></span>
+                              : <span className="italic">Remove</span>
+                            }
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onApplyIssue(issue); }}
+                        className="rounded-md p-1 text-neutral-600 hover:bg-white/[0.06] hover:text-green-400 opacity-0 group-hover:opacity-100 shrink-0"
+                        title="Apply suggestion"
+                      >
+                        <LuCheck size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

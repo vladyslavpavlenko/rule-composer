@@ -10,6 +10,8 @@ interface Props {
   onSave: (key: string) => void;
   onClose: () => void;
   initialKey?: string;
+  showTags?: boolean;
+  onShowTagsChange?: (show: boolean) => void;
 }
 
 function NavItem({
@@ -101,7 +103,7 @@ function ApiKeyField({
   );
 }
 
-export default function SettingsModal({ open, onSave, onClose, initialKey }: Props) {
+export default function SettingsModal({ open, onSave, onClose, initialKey, showTags = true, onShowTagsChange }: Props) {
   const [tab, setTab] = useState<Tab>("general");
   const [anthropicKey, setAnthropicKey] = useState(initialKey ?? "");
   const [openaiKey, setOpenaiKey] = useState("");
@@ -156,8 +158,25 @@ export default function SettingsModal({ open, onSave, onClose, initialKey }: Pro
             {tab === "general" && (
               <>
                 <h2 className="text-base font-semibold text-neutral-100 mb-6">General</h2>
-                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4 text-sm text-neutral-500">
-                  No general settings yet.
+                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-neutral-200">Show rule tags</p>
+                      <p className="text-xs text-neutral-500 mt-1">Display behavioral categories on rules</p>
+                    </div>
+                    <button
+                      onClick={() => onShowTagsChange?.(!showTags)}
+                      className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${
+                        showTags ? "bg-blue-600" : "bg-neutral-700"
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
+                          showTags ? "translate-x-[18px] translate-y-0.5" : "translate-x-0.5 translate-y-0.5"
+                        }`}
+                      />
+                    </button>
+                  </div>
                 </div>
               </>
             )}

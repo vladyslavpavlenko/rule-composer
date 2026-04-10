@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { LuTrafficCone, LuChevronDown } from "react-icons/lu";
-import { Rule, AVAILABLE_MODELS, ModelId } from "../lib/claude";
+import { Rule, AVAILABLE_MODELS, ModelId, RuleTag, RULE_TAG_LABELS } from "../lib/claude";
+
+const tagColors: Record<RuleTag, string> = {
+  guardrail: "bg-yellow-950/70 text-yellow-600/80",
+  behavior: "bg-blue-950/60 text-blue-500/60",
+  formatting: "bg-neutral-800/60 text-neutral-500/70",
+  persona: "bg-purple-950/60 text-purple-500/60",
+  context: "bg-amber-950/50 text-amber-600/60",
+};
 
 interface Props {
   rules: Rule[];
@@ -8,6 +16,7 @@ interface Props {
   onSelect: (id: string) => void;
   model: ModelId;
   onModelChange: (model: ModelId) => void;
+  showTags?: boolean;
 }
 
 function ModelSelector({ value, onChange }: { value: ModelId; onChange: (m: ModelId) => void }) {
@@ -46,6 +55,7 @@ export default function RulesList({
   onSelect,
   model,
   onModelChange,
+  showTags = true,
 }: Props) {
   return (
     <div className="flex h-full flex-col">
@@ -75,7 +85,16 @@ export default function RulesList({
             }`}
           >
             <span className="text-neutral-600 text-xs pt-0.5 shrink-0">{index + 1}</span>
-            <span>{rule.text}</span>
+            <div className="min-w-0">
+              <span>{rule.text}</span>
+              {showTags && rule.tag && (
+                <div className="mt-0.5">
+                  <span className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${tagColors[rule.tag]}`}>
+                    {RULE_TAG_LABELS[rule.tag]}
+                  </span>
+                </div>
+              )}
+            </div>
           </button>
         ))}
       </div>

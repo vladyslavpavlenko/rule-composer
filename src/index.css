@@ -44,3 +44,10 @@ input, textarea {
 .animate-slide-up {
   animation: slide-up 0.2s ease-out;
 }
+
+/* Constrain Monaco hover widget to editor panel bounds */
+.monaco-editor .monaco-hover {
+  max-width: calc(var(--editor-panel-width, 480px) - 32px) !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+}

@@ -52,9 +52,20 @@ async function callClaude(
   return res.content[0]?.text ?? "";
 }
 
+export type RuleTag = "guardrail" | "behavior" | "formatting" | "persona" | "context";
+
+export const RULE_TAG_LABELS: Record<RuleTag, string> = {
+  guardrail: "Guardrail",
+  behavior: "Behavior",
+  formatting: "Formatting",
+  persona: "Persona",
+  context: "Context",
+};
+
 export interface Rule {
   id: string;
   text: string;
+  tag: RuleTag;
 }
 
 export async function parseRules(
@@ -62,12 +73,20 @@ export async function parseRules(
   prompt: string,
   model?: string
 ): Promise<Rule[]> {
-  const system =
-    "You are a prompt analyst. Given a system prompt, extract each distinct behavioral rule or instruction as a short, standalone statement. Return ONLY a JSON array of strings — no markdown, no explanation.";
+  const system = `You are a prompt analyst. Given a system prompt, extract each distinct behavioral rule or instruction as a short, standalone statement, and classify each with exactly one tag.
+
+Tags:
+- "guardrail": Anti-override rules, security boundaries, refusal instructions, rules that prevent prompt injection or manipulation
+- "behavior": Core behavioral instructions — what the agent should do, how it should act
+- "formatting": Output format, structure, style, or length requirements
+- "persona": Identity, tone, personality, or role definitions
+- "context": Background information, domain knowledge, or reference data provided to the agent
+
+Return ONLY a JSON array of objects with keys: "text" (the rule), "tag" (one of the tags above). No markdown, no explanation.`;
   const text = await callClaude(apiKey, system, prompt, model);
   const cleaned = text.replace(/```json\n?|```/g, "").trim();
-  const arr: string[] = JSON.parse(cleaned);
-  return arr.map((t, i) => ({ id: `rule-${i}`, text: t }));
+  const arr: { text: string; tag: RuleTag }[] = JSON.parse(cleaned);
+  return arr.map((item, i) => ({ id: `rule-${i}`, text: item.text, tag: item.tag }));
 }
 
 export interface Scenario {

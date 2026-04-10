@@ -143,6 +143,9 @@ export default function App() {
   // --- Model ---
   const [model, setModel] = useState<ModelId>("claude-sonnet-4-20250514");
 
+  // --- Settings ---
+  const [showTags, setShowTags] = useState(true);
+
   // --- Rules & Scenarios ---
   const {
     rules,
@@ -290,6 +293,8 @@ export default function App() {
             onSave={handleSaveKey}
             onClose={() => setSettingsOpen(false)}
             initialKey={apiKey ?? ""}
+            showTags={showTags}
+            onShowTagsChange={setShowTags}
           />
         </div>
       ) : (
@@ -327,6 +332,7 @@ export default function App() {
                       onSelect={setSelectedRuleId}
                       model={model}
                       onModelChange={setModel}
+                      showTags={showTags}
                     />
                   ),
                 },
